@@ -43,6 +43,7 @@ def EveryNCallback_py(taskHandle, everyNsamplesEventType, nSamples, callbackData
     DAQmxReadAnalogF64(taskHandle,CANRate,timeout,DAQmx_Val_GroupByScanNumber,data,CANRate * inputChannels,byref(read),None)
     callbackdata.extend(data.tolist())    
     
+    data[0] = data[0] / (10.0/5000.0)
     # Send data over CAN..
     lowBytes = [ord(byte) for byte in struct.pack('!f', data[0])]
     msg[0] = lowBytes[3]
@@ -50,13 +51,15 @@ def EveryNCallback_py(taskHandle, everyNsamplesEventType, nSamples, callbackData
     msg[2] = lowBytes[1]
     msg[3] = lowBytes[0]
 
+    data[1] = data[1] / 10.0 * (625)/1.66 * 1.356
+     
     highBytes = [ord(byte) for byte in struct.pack('!f', data[1])]
     msg[4] = highBytes[3]
     msg[5] = highBytes[2]
     msg[6] = highBytes[1]
     msg[7] = highBytes[0] 
     
-    canWrite(c_int(hnd1), 1, pointer(msg), c_int(8), c_int(0))
+    canWrite(c_int(hnd1), 100, pointer(msg), c_int(8), c_int(0))
     
     return 0 # The function should return an integer
 
@@ -91,7 +94,7 @@ canInitializeLibrary()
 
 # ... and open channels 0 and 1. These are assumed to be on the same
 # terminated CAN bus.
-hnd1 = canOpenChannel(c_int(1), c_int(0))
+hnd1 = canOpenChannel(c_int(0), c_int(0))
 
 # Go bus on
 stat = canBusOn(c_int(hnd1))
@@ -121,8 +124,8 @@ try:
     DAQmxCreateTask("",byref(taskHandle))
     
     # By default, DynLocV will output a 0V to +10V signal. Connect outputs to inputs AI0 and AI1 on the DAQ.
-    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai0","",DAQmx_Val_Cfg_Default,0.0,10.0,DAQmx_Val_Volts,None)
-    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai1","",DAQmx_Val_Cfg_Default,0.0,10.0,DAQmx_Val_Volts,None)    
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai0","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai1","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
     
     # Set Sampling Rate at 10000 samples/sec and sample continously until the task stops.
     DAQmxCfgSampClkTiming(taskHandle,"",1000.0,DAQmx_Val_Rising,DAQmx_Val_ContSamps,4000)
