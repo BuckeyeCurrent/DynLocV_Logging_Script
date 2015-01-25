@@ -78,9 +78,10 @@ def EveryNCallback_py(taskHandle, everyNsamplesEventType, nSamples, callbackData
     time = datetime.datetime.now()
     time = time.isoformat()
     
+    #print time[-7]
     if time[-7] != '.':
         time += '.000000'
-    writer.writerow([datetime.datetime.now(), data[0], data[1]])    
+    writer.writerow([time, data[0], data[1]])    
     
     return 0 # The function should return an integer
 
