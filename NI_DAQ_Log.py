@@ -15,6 +15,10 @@ import struct
 import msvcrt
 import signal
 
+import datetime
+
+import csv
+
 # Class of the data object
 # one cannot create a weakref to a list directly
 # but the following works well
@@ -32,9 +36,18 @@ inputChannels = 2 # Analog inputs used
 timeout = 10.0
 CANRate = 10 # Hz
 
+rpm_offset = 0.4
+torque_offset = 0.783
+
+
+csvfile = open('dyno_daq_log.csv', 'w+b')
+writer = csv.writer(csvfile, delimiter=',')
+writer.writerow(['Time', 'RPM', 'Torque (Nm)'])
+
 #data = np.zeros((sampleRate * inputChannels), dtype=numpy.float64)
 
 def EveryNCallback_py(taskHandle, everyNsamplesEventType, nSamples, callbackData_ptr):
+    global writer
     callbackdata = get_callbackdata_from_id(callbackData_ptr)
     read = int32()
     data = np.zeros((CANRate * inputChannels), dtype=numpy.float64)
@@ -43,25 +56,35 @@ def EveryNCallback_py(taskHandle, everyNsamplesEventType, nSamples, callbackData
     DAQmxReadAnalogF64(taskHandle,CANRate,timeout,DAQmx_Val_GroupByScanNumber,data,CANRate * inputChannels,byref(read),None)
     callbackdata.extend(data.tolist())    
     
-    data[0] = data[0] / (10.0/5000.0)
+    data[0] = (data[0] / (10.0/5000.0))# + rpm_offset
     # Send data over CAN..
+    '''
     lowBytes = [ord(byte) for byte in struct.pack('!f', data[0])]
     msg[0] = lowBytes[3]
     msg[1] = lowBytes[2]
     msg[2] = lowBytes[1]
     msg[3] = lowBytes[0]
-
-    data[1] = data[1] / 10.0 * (625)/1.66 * 1.356
-     
+    '''
+    data[1] = (data[1] / 10.0 * (625)/1.66 * 1.356)# + torque_offset
+    
+    '''
     highBytes = [ord(byte) for byte in struct.pack('!f', data[1])]
     msg[4] = highBytes[3]
     msg[5] = highBytes[2]
     msg[6] = highBytes[1]
     msg[7] = highBytes[0] 
+    '''
+    #canWrite(c_int(hnd1), 100, pointer(msg), c_int(8), c_int(0))
+    time = datetime.datetime.now()
+    time = time.isoformat()
     
-    canWrite(c_int(hnd1), 100, pointer(msg), c_int(8), c_int(0))
+    if time[-7] != '.':
+        time += '.000000'
+    writer.writerow([datetime.datetime.now(), data[0], data[1]])    
     
     return 0 # The function should return an integer
+
+
 
 
 
@@ -85,7 +108,7 @@ canGetChannelData = canlib32.canGetChannelData
 canCHANNELDATA_CARD_FIRMWARE_REV = 9
 canCHANNELDATA_DEVDESCR_ASCII = 26
 
-
+'''
 # Define a type for the body of the CAN message. Eight bytes as usual.
 MsgDataType = c_uint8 * 8
 
@@ -102,8 +125,9 @@ if stat < 0:
     print "canBusOn channel 1 failed: ", stat
     assert(0)
 
+'''
 # Setup a message
-msg = MsgDataType()
+#msg = MsgDataType()
 
 
 # Obtain the firmware revision for channel (not handle!) 0
@@ -116,7 +140,6 @@ s = create_string_buffer(100)
 canGetChannelData(c_int(0), canCHANNELDATA_DEVDESCR_ASCII, pointer(s), 100)
 print "Device name: ", s.value
        
-    
 
 
 try:
