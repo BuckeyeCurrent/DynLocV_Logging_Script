@@ -32,7 +32,7 @@ read = int32()
 
 taskHandle = TaskHandle()
 sampleRate = 1000 # Samples/sec (Hz)
-inputChannels = 2 # Analog inputs used
+inputChannels = 8 # Analog inputs used
 timeout = 10.0
 CANRate = 10 # Hz
 
@@ -149,7 +149,14 @@ try:
     
     # By default, DynLocV will output a 0V to +10V signal. Connect outputs to inputs AI0 and AI1 on the DAQ.
     DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai0","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)
-    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai1","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai1","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)   
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai2","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai3","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai4","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai5","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai6","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
+    DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai7","",DAQmx_Val_RSE,0.0,10.0,DAQmx_Val_Volts,None)    
+
     
     # Set Sampling Rate at 10000 samples/sec and sample continously until the task stops.
     DAQmxCfgSampClkTiming(taskHandle,"",1000.0,DAQmx_Val_Rising,DAQmx_Val_ContSamps,4000)
